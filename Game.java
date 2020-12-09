@@ -1,5 +1,11 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+
 import javax.swing.*;
 
 public class Game implements Runnable {
@@ -20,7 +26,24 @@ public class Game implements Runnable {
         final JButton Continue = new JButton("Continue");
         Continue.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                frameIntro.dispose();
+                Reader freader;
+                BufferedReader file;
+                JFrame gameScreen = null;
+                try {
+                    freader = new FileReader("files/saved");
+                    file = new BufferedReader(freader);
+                    gameScreen = PlayerScreen.getFrame(Integer.parseInt(file.readLine()), true);
+                } catch (FileNotFoundException e1) {
+                } catch (NumberFormatException e1) {
+                    System.out.println("Number format");
+                } catch (IOException e1) {
+                }
+                gameScreen.pack();
+                gameScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                gameScreen.setVisible(true);
+                frameIntro.setVisible(false);
+                
+                
                 //Add function to retrieve saved file
             }
         });
@@ -34,9 +57,9 @@ public class Game implements Runnable {
 //                frameIntro.dispose();
                 JFrame gameScreen = null;
                 switch((String) level.getSelectedItem()) {
-                case "Easy": gameScreen = PlayerScreen.getFrame(5); break;
-                case "Medium": gameScreen = PlayerScreen.getFrame(7); break;
-                case "Hard": gameScreen = PlayerScreen.getFrame(9); break;
+                case "Easy": gameScreen = PlayerScreen.getFrame(5, false); break;
+                case "Medium": gameScreen = PlayerScreen.getFrame(7, false); break;
+                case "Hard": gameScreen = PlayerScreen.getFrame(9, false); break;
                 }
                 gameScreen.pack();
                 gameScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
