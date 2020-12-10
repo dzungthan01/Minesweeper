@@ -32,19 +32,33 @@ public class Game implements Runnable {
                 try {
                     freader = new FileReader("files/saved");
                     file = new BufferedReader(freader);
+//                    try {
+//                        gameScreen = PlayerScreen.getFrame(Integer.parseInt(file.readLine()), true);
+//                    } catch (NullPointerException e1){
+//                        JOptionPane.showMessageDialog(frameIntro, "No saved game found");
+//                        System.out.println("No saved game");
+//                    }
                     gameScreen = PlayerScreen.getFrame(Integer.parseInt(file.readLine()), true);
                 } catch (FileNotFoundException e1) {
                 } catch (NumberFormatException e1) {
                     System.out.println("Number format");
                 } catch (IOException e1) {
                 }
-                gameScreen.pack();
-                gameScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                gameScreen.setVisible(true);
-                frameIntro.setVisible(false);
+                try {
+                    gameScreen.pack();
+                    gameScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    gameScreen.setVisible(true);
+                    frameIntro.setVisible(false);
+                } catch (NullPointerException e1){
+                    JOptionPane.showMessageDialog(frameIntro, "No saved game found");
+                    System.out.println("No saved game");
+                }
+//                frameIntro.setVisible(false);
+//                gameScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//                gameScreen.setVisible(true);
+//                frameIntro.setVisible(false);
                 
                 
-                //Add function to retrieve saved file
             }
         });
         

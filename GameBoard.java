@@ -1,10 +1,15 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 
 public class GameBoard extends JPanel {
@@ -13,7 +18,7 @@ public class GameBoard extends JPanel {
     private JLabel status;
     private final int width;
     private final int height;
-    private static BufferedImage temp;
+//    private static BufferedImage temp;
     
     public GameBoard(int size, boolean saved) {
         this.mf = new mineField(size);
@@ -28,21 +33,49 @@ public class GameBoard extends JPanel {
         }
         else {
             mf.loadBomb();
+            FileReader freader;
+            BufferedReader file;
+            try {
+                freader = new FileReader("files/saved");
+                file = new BufferedReader(freader);
+                file.readLine();
+                mf.setFlag(Integer.parseInt(file.readLine()));
+                mf.setPeek(Integer.parseInt(file.readLine()));
+            } catch (FileNotFoundException e1) {
+            } catch (IOException e1) {
+                
+            } 
         }
-        
+       
+
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 Point p = e.getPoint();
                 
                 if (mf.getMode() == 0) {
-                    mf.unveilCell(p.x/100,  p.y/100);
+                    mf.uncoverCell(p.x/100,  p.y/100);
+                    repaint();
                 }
                 else if (mf.getMode() == 1) {
                     mf.flagCell(p.x/100, p.y/100);
+                    repaint();
+                }
+                else if (mf.getMode() == 2) {
+                    mf.peekCell(p.x/100, p.y/100);
+                    repaint();
+                    Timer timer = new Timer(1500, new ActionListener() {
+                        public void actionPerformed(ActionEvent e) {
+                            long currentTime = System.currentTimeMillis();
+                            if (System.currentTimeMillis() - currentTime < 1500) {
+                                mf.recoverCell(p.x/100, p.y/100);
+                                repaint();
+                            }
+                        }
+                    });
+                    timer.start();
                 }
                 
                 updateStatus();
-                repaint();
             }
         });
         width = mf.getSize() * 100;
@@ -52,7 +85,8 @@ public class GameBoard extends JPanel {
     
     public void updateStatus() {
         if (mf.checkGame() == 0) {
-            status.setText("Game in progress");
+            status.setText("Game in progress -- " + "Flag Remaining: " + mf.getFlagLeft() + 
+                    " -- Peek Remaining: " + mf.getPeekLeft());
         }
         else if (mf.checkGame() == 1) {
             status.setText("You win!");
@@ -86,11 +120,6 @@ public class GameBoard extends JPanel {
         mf.flagCell(r, c);
     }
     
-    public void peek(int r, int c) {
-        mf.unveilCell(r, c);
-        mf.recoverCell(r, c);
-        
-    }
     public void resetMode() {
         mf.resetMode();
     }
@@ -104,6 +133,7 @@ public class GameBoard extends JPanel {
         mf = new mineField(size);
         mf.setBomb();
         status.setText("Game in progress");
+        mf.resetSavedFile();
     }
     
     public JLabel getStatus() {
@@ -126,13 +156,13 @@ public class GameBoard extends JPanel {
             for (int j = 0; j <mf.getSize(); j++) {
                 String state = mf.getObj(i, j);
                 if (state.equals("F") || state.equals("F*")) {
-//                    try {
-//                        if (temp == null) {
-//                            temp = ImageIO.read(new File("game_img/flag.jpg"));
-//                        }
-//                    } catch (IOException e) {
-//                        System.out.println("Img error" + e.getMessage());
-//                    }
+                    try {
+                        BufferedImage temp = ImageIO.read(new File("game_img/flag.jpg"));
+                        g.drawImage(temp, i*100, j*100, 100, 100, null);
+                    
+                    } catch (IOException e) {
+                        System.out.println("Img error" + e.getMessage());
+                    }
 //                    g.drawImage(temp, i*100, j*100, 100, 100, null);
                 }
                 else if (state.equals("0") || state.equals("1") || state.equals("2") || state.equals("3") || 
@@ -143,13 +173,11 @@ public class GameBoard extends JPanel {
                 }
                 else if (state.equals("X")) {
                     try {
-                        if (temp == null) {
-                            temp = ImageIO.read(new File("game_img/bomb.jpg"));
-                        }
+                        BufferedImage temp = ImageIO.read(new File("game_img/bomb.jpg"));
+                        g.drawImage(temp, i*100, j*100, 100, 100, null);
                     } catch (IOException e) {
                         System.out.println("Img error" + e.getMessage());
                     }
-                    g.drawImage(temp, i*100, j*100, 100, 100, null);
                     
                 }
             }

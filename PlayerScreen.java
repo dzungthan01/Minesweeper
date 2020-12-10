@@ -55,7 +55,7 @@ public class PlayerScreen extends JFrame {
        });
        
        final JButton normal = new JButton("Normal mode");
-       newGame.addActionListener(new ActionListener() {
+       normal.addActionListener(new ActionListener() {
            public void actionPerformed(ActionEvent e) {
                board.resetMode();  
            }

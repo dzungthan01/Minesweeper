@@ -12,25 +12,43 @@ import java.util.List;
 public class mineField {
 
     private GameObj[][] board;
+    private BufferedWriter bw;
     private int size;
     private int numBomb;
+    private int flag;
+    private int peek;
     private int mode; //0: uncover; 1: flag; 2: peek
     private int gameOver; // 0: game in progress, 1: win, 2: lose
     
     public mineField(int size) {
         this.board = new GameObj[size][size];
         this.gameOver = 0;
-        this.numBomb = size*size/2 - size*size/10;
+        this.numBomb = size*size/2 - 3*size*size/10;
         this.size = size;
         this.mode = 0; 
+        this.flag = size*size/2 - 3*size*size/10;
+        this.peek = 3;
     }
     
-//    public boolean okayMove(int r, int c) {
-//        if ()
-//    }
     
     public int getSize() {
         return size;
+    }
+    
+    public void setPeek(int a) {
+        peek = a;
+    }
+    
+    public int getPeekLeft() {
+        return peek;
+    }
+    
+    public void setFlag(int a) {
+        flag = a;
+    }
+    
+    public int getFlagLeft() {
+        return flag;
     }
     
     public int checkGame() {
@@ -73,14 +91,34 @@ public class mineField {
         board[r][c] = new GameObj(r, c, name);
     }
     
+    public void peekCell(int r, int c) {
+        if (peek > 0) {
+            if (getObj(r, c).equals("C*")) {
+                setCell(r, c, "X");
+            }
+            else if (getObj(r, c).equals("C")) {
+                setCell(r, c, Integer.toString(numOfAdjacentMines(r, c)));
+            }
+            peek--;
+        }
+    }
+    
     public void uncoverCell(int r, int c) {
         if (getObj(r, c).equals("C*")) {
             setCell(r, c, "X");
+            gameOver = 2;
         }
-        else if (getObj(r, c).equals("C") && numOfAdjacentMines(c, r) != 0) {
-            setCell(r, c, Integer.toString(numOfAdjacentMines(c, r)));
+        else if (getObj(r, c).equals("C") && numOfAdjacentMines(r, c) != 0) {
+            setCell(r, c, Integer.toString(numOfAdjacentMines(r, c)));
+            if(checkIfDone()) {
+                gameOver = 1;
+            }
+            else {
+                gameOver = 0;
+            }
+            
         }
-        else if (getObj(r, c).equals("C") && numOfAdjacentMines(c, r) == 0) {
+        else if (getObj(r, c).equals("C") && numOfAdjacentMines(r, c) == 0) {
             setCell(r, c, "0");
             for (int d1 = -1; d1 <= 1; d1 ++) {
                 for (int d2 = -1; d2 <= 1; d2++) {
@@ -90,35 +128,51 @@ public class mineField {
                        }
                 }
             }
+            if (checkIfDone()) {
+                gameOver = 1;
+            }
+            else {
+                gameOver = 0;
+            }
         }
     }
     
-    public void unveilCell(int r, int c) {
-        if (getObj(r, c).equals("C")) {
-            uncoverCell(r, c);
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    if (!board[i][j].getName().equals("C") || !board[i][j].getName().equals("C*")) {
-                        gameOver = 1;
-                    }
+    public boolean checkIfDone() {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (board[i][j].getName().equals("C") || board[i][j].getName().equals("C*")) {
+                    return false;
                 }
             }
         }
-        else if (getObj(r, c).equals("C*")) {
-            setCell(r, c, "X");
-            gameOver = 2;
-        }
+        return true;
     }
     
+    
     public void flagCell(int r, int c) {
-        if (mode == 1) {
-            if (getObj(r, c).equals("C")) {
-                setCell(r, c, "F");
+        if (flag > 0) {
+            if (mode == 1) {
+                if (getObj(r, c).equals("C")) {
+                    setCell(r, c, "F");
+                    if (checkIfDone()) {
+                        gameOver = 1;
+                    }
+                    else {
+                        gameOver = 0;
+                    }
+                }
+                else if (getObj(r, c).equals("C*")) {
+                    setCell(r, c, "F*");
+                    if (checkIfDone()) {
+                        gameOver = 1;
+                    }
+                    else {
+                        gameOver = 0;
+                    }
+                }
+                flag--;
             }
-            else if (getObj(r, c).equals("C*")) {
-                setCell(r, c, "F*");
-            }
-        }
+        } 
     }
     
     public void recoverCell(int r, int c) {
@@ -150,18 +204,6 @@ public class mineField {
         mode = 0;
     }
     
-//    public int trimBorder(int x) {
-//        if (x < 0) {
-//            return 0;
-//        }
-//        else if (x >= size) {
-//            return size - 1;
-//        }
-//        else {
-//            return x;
-//        }
-//    }
-    
     public int numOfAdjacentMines(int r, int c) {
         int num = 0;
         for (int d1 = -1; d1 <= 1; d1 ++) {
@@ -179,6 +221,8 @@ public class mineField {
     public List<String> convertMFtoListString() {
         ArrayList<String> temp = new ArrayList<String>();
         temp.add(Integer.toString(size));
+        temp.add(Integer.toString(flag));
+        temp.add(Integer.toString(peek));
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 temp.add(getObj(i, j));
@@ -189,7 +233,6 @@ public class mineField {
     
     public void saveGame(List<String> mf) {
         File file = Paths.get("files/saved").toFile();
-        BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new FileWriter(file));
             for (String s : mf) {
@@ -200,6 +243,16 @@ public class mineField {
                     
                 }
             }
+
+        } catch (IOException e) {
+            System.out.println("Invalid file path");
+        }
+    }
+    
+    public void resetSavedFile() {
+        File file = Paths.get("files/saved").toFile();
+        try {
+            bw = new BufferedWriter(new FileWriter(file));
 
         } catch (IOException e) {
             System.out.println("Invalid file path");
